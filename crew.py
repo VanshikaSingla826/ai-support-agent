@@ -9,7 +9,7 @@ if my_key:
     my_key = my_key.strip() # Safety trim
 
 llm = LLM(
-    model="gemini/gemini-2.5-flash",
+    model="gemini/gemini-2.0-flash-lite",
     api_key=my_key
 )
 
