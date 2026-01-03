@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enterprise AI Support</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen py-10">
+    <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+        <div class="border-b pb-4 mb-6">
+            <h1 class="text-3xl font-bold text-slate-800">🏢 Enterprise Support Portal</h1>
+            <p class="text-slate-500">Powered by Agentic AI</p>
+        </div>
+
+        <form action="/solve" method="post" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block font-bold text-slate-700">Customer Name</label>
+                    <input type="text" name="customer_name" class="w-full border p-2 rounded" placeholder="John Doe" required>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700">Priority</label>
+                    <select name="ticket_priority" class="w-full border p-2 rounded">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700">Issue Title</label>
+                <input type="text" name="ticket_issue" class="w-full border p-2 rounded" placeholder="e.g. Cannot login to dashboard" required>
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700">Detailed Description</label>
+                <textarea name="ticket_details" rows="4" class="w-full border p-2 rounded" placeholder="Paste error logs or details here..." required></textarea>
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded hover:bg-blue-700 transition">
+                🚀 Analyze & Resolve Ticket
+            </button>
+        </form>
+
+        {% if result %}
+        <div class="mt-8 p-6 bg-green-50 border border-green-200 rounded">
+            <h2 class="text-xl font-bold text-green-800 mb-2">✅ Resolution & Documentation:</h2>
+            <pre class="whitespace-pre-wrap text-sm text-slate-800">{{ result }}</pre>
+            <p class="mt-4 text-xs text-gray-500">Copy of documentation saved to server: support_docs.md</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
