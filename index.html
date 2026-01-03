@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise AI Support</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+
+    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl border-t-4 border-blue-600">
+        
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+                <i class="fa-solid fa-robot text-blue-600"></i>
+                Enterprise Support Portal
+            </h1>
+            <p class="text-gray-500 mt-1">Powered by Multi-Agentic AI (Gemini 2.5)</p>
+        </div>
+
+        <div id="ticketForm" class="space-y-4">
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Customer Name</label>
+                    <input type="text" id="customerName" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="John Doe">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Priority</label>
+                    <select id="priority" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                        <option value="High">High (Immediate)</option>
+                        <option value="Medium" selected>Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Customer Email <span class="text-xs font-normal text-gray-500">(For resolution report)</span></label>
+                <input type="email" id="customerEmail" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="john.doe@company.com">
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Issue Title</label>
+                <input type="text" id="issueTitle" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Cannot login to dashboard">
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Detailed Description</label>
+                <textarea id="ticketDetails" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Paste error logs or details here..."></textarea>
+            </div>
+
+            <button onclick="solveTicket()" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-paper-plane"></i>
+                Analyze & Resolve Ticket
+            </button>
+        </div>
+
+        <div id="loading" class="hidden mt-6 text-center py-4">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-3"></div>
+            <p class="text-gray-600 font-medium animate-pulse">AI Agents are working...</p>
+            <p class="text-sm text-gray-400 mt-1" id="loadingStatus">Initializing Researcher Agent...</p>
+        </div>
+
+        <div id="resultSection" class="hidden mt-8 pt-6 border-t border-gray-200 animate-fade-in">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-check-circle text-green-500"></i>
+                Proposed Solution
+            </h2>
+            
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 font-mono text-sm text-gray-700 whitespace-pre-wrap leading-relaxed shadow-inner h-64 overflow-y-auto" id="solutionBox">
+                </div>
+
+            <div class="mt-4 flex gap-3">
+                <a id="downloadBtn" href="#" target="_blank" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-center transition duration-200 hidden">
+                    <i class="fa-solid fa-download mr-2"></i> Download Report
+                </a>
+                <button onclick="location.reload()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg transition duration-200">
+                    New Ticket
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ---------------------------------------------------------
+        // TODO: PASTE YOUR RENDER URL HERE (No trailing slash)
+        // Example: "https://ai-support-agent.onrender.com"
+        // ---------------------------------------------------------
+        const API_URL = "https://ai-support-agent-40gd.onrender.com"; 
+
+        async function solveTicket() {
+            // Get values
+            const name = document.getElementById('customerName').value;
+            const email = document.getElementById('customerEmail').value;
+            const priority = document.getElementById('priority').value;
+            const title = document.getElementById('issueTitle').value;
+            const details = document.getElementById('ticketDetails').value;
+
+            // Simple validation
+            if(!title || !details) {
+                alert("Please fill in the Issue Title and Details.");
+                return;
+            }
+
+            // Show Loading UI
+            const btn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const resultSection = document.getElementById('resultSection');
+            
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            btn.disabled = true;
+            loading.classList.remove('hidden');
+            resultSection.classList.add('hidden'); // Hide previous results
+
+            // Update status text periodically to make it feel alive
+            const statuses = ["Researcher is checking documentation...", "Specialist is analyzing the root cause...", "Writer is drafting the final report..."];
+            let statusIdx = 0;
+            const statusInterval = setInterval(() => {
+                document.getElementById('loadingStatus').innerText = statuses[statusIdx % statuses.length];
+                statusIdx++;
+            }, 3000);
+
+            try {
+                // Send data to Backend
+                const response = await fetch(`${API_URL}/solve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        customer_name: name,
+                        customer_email: email, // Sending the email now!
+                        priority: priority,
+                        issue_title: title,
+                        ticket_details: details
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server Error: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                // Stop loading
+                clearInterval(statusInterval);
+                loading.classList.add('hidden');
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.disabled = false;
+
+                // Show Results
+                resultSection.classList.remove('hidden');
+                document.getElementById('solutionBox').innerText = data.solution;
+
+                // Handle Download Button
+                const downloadBtn = document.getElementById('downloadBtn');
+                if (data.download_url) {
+                    // Update the href to point to the backend download link
+                    downloadBtn.href = API_URL + data.download_url;
+                    downloadBtn.classList.remove('hidden'); // Show the button
+                    downloadBtn.classList.add('block');
+                }
+
+            } catch (error) {
+                clearInterval(statusInterval);
+                loading.classList.add('hidden');
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.disabled = false;
+                alert("Error connecting to AI Agent: " + error.message);
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>
