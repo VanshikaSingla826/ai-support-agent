@@ -9,7 +9,7 @@ from crew import kickoff_support_crew
 
 app = FastAPI()
 
-# Enable CORS (Allows your frontend to talk to this backend)
+# Enable CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -20,7 +20,7 @@ app.add_middleware(
 # --- DATA MODEL ---
 class Ticket(BaseModel):
     customer_name: str
-    customer_email: str  # Added Email field
+    customer_email: str
     priority: str
     issue_title: str
     ticket_details: str
@@ -42,13 +42,19 @@ def log_ticket_to_csv(ticket_data: dict, solution: str):
             "priority": ticket_data['priority'],
             "title": ticket_data['issue_title'],
             "details": ticket_data['ticket_details'],
-            "solution_preview": solution[:100] + "..." # Save first 100 chars
+            "solution_preview": solution[:100] + "..." 
         })
 
 # --- ENDPOINTS ---
+
+# 1. The Homepage (Front Door) - THIS WAS MISSING
+@app.get("/")
+def read_root():
+    return FileResponse('index.html')
+
+# 2. The AI Solver
 @app.post("/solve")
 def solve_ticket(ticket: Ticket):
-    # 1. Run the AI Crew
     inputs = {
         "customer_name": ticket.customer_name,
         "ticket_priority": ticket.priority,
@@ -57,21 +63,15 @@ def solve_ticket(ticket: Ticket):
     }
     
     try:
-        # Run AI
         result = kickoff_support_crew(inputs)
         final_answer = str(result)
-
-        # 2. Log the data for analytics
+        
+        # Log and Save
         log_ticket_to_csv(ticket.dict(), final_answer)
         
-        # 3. Create a downloadable file for the user
         filename = f"solution_{datetime.now().strftime('%H%M%S')}.txt"
         with open(filename, "w", encoding="utf-8") as f:
-            f.write(f"SUPPORT TICKET SOLUTION\n")
-            f.write(f"-----------------------\n")
-            f.write(f"Issue: {ticket.issue_title}\n")
-            f.write(f"Date: {datetime.now()}\n\n")
-            f.write(final_answer)
+            f.write(f"SUPPORT TICKET SOLUTION\nIssue: {ticket.issue_title}\n\n{final_answer}")
 
         return {
             "solution": final_answer,
@@ -81,6 +81,7 @@ def solve_ticket(ticket: Ticket):
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
+# 3. File Download
 @app.get("/download/{filename}")
 def download_file(filename: str):
     file_path = f"./{filename}"
@@ -88,9 +89,9 @@ def download_file(filename: str):
         return FileResponse(file_path, media_type='application/octet-stream', filename=filename)
     raise HTTPException(status_code=404, detail="File not found")
 
+# 4. View Logs
 @app.get("/logs")
 def get_logs():
-    # Endpoint to view the CSV logs directly in browser
     if os.path.exists('ticket_logs.csv'):
         return FileResponse('ticket_logs.csv', media_type='text/csv', filename='analytics.csv')
     return {"message": "No logs yet."}
